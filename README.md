@@ -1,38 +1,34 @@
 # PHP Posture Scanner
 
-**Live demo:** https://snikumbha-t.github.io/php-posture-scanner/
+**Live:** https://snikumbha-t.github.io/php-posture-scanner/
 
-Enter a website address and the scanner reports whether the site runs PHP, then gives it a grade from A to F with a prioritised action plan. Every fix includes the exact config line to add.
+Enter a website address and get a real security-posture report: whether the site runs PHP, its version/EOL status, security headers, cookie flags, information disclosure, and publicly-exposed sensitive files — graded A–F with a prioritised action plan where every fix includes the exact config line to add.
 
 ## What's here
 
 | Path | What it is |
 |---|---|
-| `index.html` | Interactive demo with four fictional sample sites. Any other address gets a simulated report, and the demo never contacts a real website. |
-| `scanner/` | The real scanner, a small PHP app that makes live requests to the address you enter. |
+| `index.html` | **The real front-end.** Calls a live scanning backend and renders a genuine report — no simulation. On first use, set the *Backend API* field to your deployed backend URL (remembered in your browser), or use `?api=https://your-backend`. |
+| `demo.html` | The old interactive demo. It never contacts a real website — any address gets a report *simulated from its name*. Kept for reference. |
+| `scanner/` | An early PHP version of the real scanner. |
 
-## Run the real scanner
+## Important: Pages can't run PHP
 
-You need PHP 8.0 or later with the cURL extension.
+GitHub Pages serves static files only, so it **cannot run the scanning backend** — it can only host `index.html`. To get real results you deploy the PHP backend somewhere and point this page at it.
 
-    cd scanner
-    php -S localhost:8000
+The full, maintained backend lives in **[php-posture-scanner-enterprise](https://github.com/snikumbha-t/php-posture-scanner-enterprise)** and deploys in one command:
 
-Then open http://localhost:8000.
+```bash
+# Fly.io
+fly launch --copy-config --now
+# or Docker anywhere
+docker compose up --build -d        # http://localhost:8080
+```
 
-## What it checks
+Then open this page, paste the backend URL into *Backend API*, and scan. (Set `PVC_CORS_ORIGIN=https://snikumbha-t.github.io` on the backend to lock the API to this page.)
 
-- **PHP detection:** looks for the X-Powered-By header, the PHPSESSID cookie, links to .php pages and WordPress XML-RPC.
-- **PHP version:** reports the exact version when the site discloses it and flags versions that no longer get security fixes.
-- **App stack:** identifies the web server, plus WordPress, Laravel, Drupal, Joomla, Symfony and Magento.
-- **HTTPS:** checks the site uses HTTPS and that plain HTTP redirects to it.
-- **Server version:** flags when the web server reveals its software version.
-- **Security headers:** HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy and Permissions-Policy.
-- **Cookie flags:** HttpOnly, Secure and SameSite.
-- **Exposed files:** `.env`, `.git/config`, `composer.json` and `composer.lock`, phpinfo pages, `.htaccess`, config backups and `server-status`. Each one is checked by its content to avoid false alarms.
+Until a backend URL is set, the page honestly tells you to set one — it does not fabricate results.
 
-## Scope
+## Ethics
 
-The scanner only makes the same ordinary requests a browser makes. It sends no attack traffic, injection strings or password guesses, and it refuses internal or private addresses.
-
-**Only scan sites you own or have permission to test.**
+Scan only sites you own or are authorised to test. The backend makes ordinary GET/HEAD requests and reads only public responses — no exploits, no brute-forcing.
